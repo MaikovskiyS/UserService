@@ -47,8 +47,21 @@ func (m *mySQL) Close() error {
 func (m *mySQL) GetFriendsById(id uint) ([]string, error) {
 	return nil, nil
 }
-func (m *mySQL) AddFriend(id1, id2 uint) (name1, name2 string, err error) {
-	return
+func (m *mySQL) AddFriend(ctx context.Context, f models.Friendship) (name1, name2 string, err error) {
+	execCtx, cancel := context.WithTimeout(ctx, m.timeOut)
+	defer cancel()
+	res, err := m.db.ExecContext(execCtx, "INSERT INTO user.friendship (first_user_id, second_user_id) VALUES (?, ?)", f.UserId1, f.UserId2)
+	if err != nil {
+		m.log.Info("cant insert to db")
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		m.log.Info("cant read result")
+	}
+	m.log.Printf("%d friendship created", rows)
+
+	return "nil", "nil", nil
+	//TODO currect select to get friends names
 }
 func (m *mySQL) DeleteUser(ctx context.Context, id *uint) error {
 	fmt.Println("in deleteuserFunc  id:", *id)

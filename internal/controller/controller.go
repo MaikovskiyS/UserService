@@ -18,7 +18,7 @@ import (
 
 type service interface {
 	GetFriendsById(id uint) ([]string, error)
-	AddFriend(id1, id2 uint) (name1, name2 string, err error)
+	AddFriend(ctx context.Context, f models.Friendship) (name1, name2 string, err error)
 	DeleteUser(ctx context.Context, id *uint) error
 	GetUserById(ctx context.Context, id *uint) (*models.User, error)
 	CreateUser(ctx context.Context, u *models.User) (uint, error)
@@ -125,22 +125,16 @@ func (c *Controller) DeleteUserEndPoint(w http.ResponseWriter, r *http.Request) 
 
 //add friend
 func (c *Controller) AddFriendEndPoint(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
+	ctx := context.Background()
+	var newFriendship models.Friendship
+	err := json.NewDecoder(r.Body).Decode(&newFriendship)
 	if err != nil {
-		fmt.Println("Не прочитали боди")
+		c.log.Info("cant decode request", err)
 	}
-	text := string(data)
-	arr := strings.Split(text, ",")
-	id1, err := strconv.ParseUint(arr[0], 10, 0)
-	if err != nil {
-		fmt.Println("129")
-	}
-	id2, err := strconv.ParseUint(arr[1], 10, 0)
-	if err != nil {
-		fmt.Println("133")
-	}
-	fmt.Println(id1, id2)
-	name1, name2, _ := c.service.AddFriend(uint(id1), uint(id2))
+	fmt.Println(newFriendship)
+	name1, name2, _ := c.service.AddFriend(ctx, newFriendship)
+	fmt.Println(name1, name2)
+	//TODO
 	response := name1 + " и " + name2 + " теперь Друзья!"
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte(response))
